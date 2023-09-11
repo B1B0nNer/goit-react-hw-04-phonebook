@@ -1,33 +1,42 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import ContactForm from './ContactForm';
 import ContactList from './ContactList';
 import Filter from './Filter';
 const shortid = require('shortid');
 
-class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+export const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState('');
 
-  componentDidMount() {
-    const savedContacts = localStorage.getItem('contacts');
+  useEffect(() => {
+    setContacts(
+      localStorage.getItem('contacts')
+        ? JSON.parse(localStorage.getItem('contacts'))
+        : []
+    );
+  }, []);
 
-    if (savedContacts) {
-      this.setState({ contacts: JSON.parse(savedContacts) });
-    }
-  }
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
+  // componentDidMount() {
+  //   this.setState({
+  //     contacts: localStorage.getItem('contacts')
+  //       ? JSON.parse(localStorage.getItem('contacts'))
+  //       : [],
+  //   });
+  // }
 
-  addContact = (name, number) => {
-    const { contacts } = this.state;
+  // componentDidUpdate(prevProps, prevState) {
+  //   if (prevState.contacts !== this.state.contacts) {
+  //     localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+  //   }
+  // }
+
+  const addContact = (name, number) => {
     const isNameInList = contacts.find(
-      (item) => item.name.toLowerCase() === name.toLowerCase()
+      item => item.name.toLowerCase() === name.toLowerCase()
     );
     if (isNameInList !== undefined) {
       return alert(`Contact ${isNameInList.name} is already in your list !`);
@@ -37,41 +46,44 @@ class App extends Component {
       name,
       number,
     };
-    this.setState((prevState) => ({
-      contacts: [newContact, ...prevState.contacts],
-    }));
+    // this.setState(prevState => ({
+    //   contacts: [newContact, ...prevState.contacts],
+    // }));
+    setContacts(prevContacts => [newContact, ...prevContacts]);
   };
 
-  deleteContact = (contactId) => {
-    this.setState((prevState) => ({
-      contacts: prevState.contacts.filter((item) => item.id !== contactId),
-    }));
-  };
-
-  onFilterChange = (data) => {
-    this.setState({ filter: data });
-  };
-
-  render() {
-    const { contacts, filter } = this.state;
-    const normalizeFilterField = filter.toLowerCase();
-    const visibleContacts = contacts.filter((item) =>
-      item.name.toLowerCase().includes(normalizeFilterField)
+  const deleteContact = contactId => {
+    // this.setState(prevState => ({
+    //   contacts: prevState.contacts.filter(item => item.id !== contactId),
+    // }));
+    setContacts(prevContacts =>
+      prevContacts.filter(item => item.id !== contactId)
     );
+  };
 
-    return (
-      <>
-        <h1>PhoneBook</h1>
-        <ContactForm onSubmit={this.addContact} />
-        <Filter value={filter} onFilterChange={this.onFilterChange} />
-        {contacts.length ? (
-          <ContactList contactsList={visibleContacts} onDelete={this.deleteContact} />
-        ) : (
-          <p>No Contacts Yet ^_^</p>
-        )}
-      </>
-    );
-  }
-}
+  const onFilterChange = data => {
+    // this.setState({
+    //   filter: data,
+    // });
+    setFilter(data);
+  };
 
-export default App;
+  const normalizeFilterField = filter.toLowerCase();
+  const visibleContacts = contacts.filter(item =>
+    item.name.toLowerCase().includes(normalizeFilterField)
+  );
+  return (
+    <>
+      <h1>PhoneBook</h1>
+      <ContactForm onSubmit={addContact} />
+      <Filter value={filter} onFilterChange={onFilterChange} />
+      {contacts.length ? (
+        <ContactList contactsList={visibleContacts} onDelete={deleteContact} />
+      ) : (
+        <p>No Contacts Yet ^_^</p>
+      )}
+    </>
+  );
+};
+
+// export default App;
